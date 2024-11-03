@@ -24,8 +24,6 @@ class DataTransformation:
             numerical_features = [
                 'writing_score', 
                 'reading_score', 
-                'math_score',
-                'average_scores'
                 ]
             categorical_features = [
                 'gender',
@@ -51,18 +49,19 @@ class DataTransformation:
             )
             logging.info('One Hot Encoding is done for categorical features')
             
-            preprocessor = ColumnTransformer([
-                ('numerical_pipeline',numerical_pipeline,numerical_features),
-                ('categorical_pipeline',categorical_pipeline,categorical_features)
-            ])
+            preprocessor = ColumnTransformer(
+                transformers=[
+                    ('numerical_pipeline',numerical_pipeline,numerical_features),
+                    ('categorical_pipeline',categorical_pipeline,categorical_features)
+                ]
+            )
             
             return preprocessor
             
         except Exception as e:
             raise CustomException(e,sys)
 
-    def instantiate_data_transformation(self,train_path,test_path):
-        
+    def instantiate_data_transformation(self, train_path, test_path):
         try:
             train_df = pd.read_csv(train_path)
             test_df = pd.read_csv(test_path)
@@ -71,25 +70,26 @@ class DataTransformation:
             logging.info('Obtaining Preprocessor Object')
             preprocesing_obj = self.get_data_transformer_obj()
             
-            target_column = 'total_scores'
-            numerical_column = [               
+            target_column = 'math_score'
+            numerical_columns = [               
                 'writing_score', 
                 'reading_score', 
                 'math_score',
-                'average_scores']
+                'average_scores'
+            ]
             
-            input_feature_train_df = train_df.drop(columns=[target_column],axis=1)
+            input_feature_train_df = train_df.drop(columns=[target_column, 'average_scores', 'total_scores'], axis=1)
             target_feature_train_df = train_df[target_column]
             
-            input_feature_test_df = test_df.drop(columns=[target_column],axis=1)
+            input_feature_test_df = test_df.drop(columns=[target_column, 'average_scores', 'total_scores'], axis=1)
             target_feature_test_df = test_df[target_column]
-            
+
             logging.info('Applying preprocessor object on train and test dataframe')
             input_feature_train_arr = preprocesing_obj.fit_transform(input_feature_train_df)
             input_feature_test_arr = preprocesing_obj.transform(input_feature_test_df)
             
             train_arr = np.c_[
-                input_feature_train_arr,np.array(target_feature_train_df)
+                input_feature_train_arr, np.array(target_feature_train_df)
             ]
             
             test_arr = np.c_[
@@ -99,8 +99,8 @@ class DataTransformation:
             logging.info('Saved Preprocessor file')
             
             save_file(
-                file_path = self.data_transformation_config.preprocessor_obj_file_path,
-                obj = preprocesing_obj
+                file_path=self.data_transformation_config.preprocessor_obj_file_path,
+                obj=preprocesing_obj
             )
             
             return (
